@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { CycleentryComponent } from './cycleentry.component';
+import { CycleentryComponent } from './cycle-form.component';
 
 describe('CycleentryComponent', () => {
   let component: CycleentryComponent;

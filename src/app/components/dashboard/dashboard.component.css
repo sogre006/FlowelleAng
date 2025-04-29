@@ -1,0 +1,255 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Segoe UI', 'Roboto', sans-serif;
+}
+
+.app-container {
+  width: 100vw;
+  height: 100vh;
+  background-color: #ffbcbc;
+  overflow: hidden;
+  position: relative;
+  display: grid;
+  grid-template-rows: 1fr auto;
+}
+
+.content-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  position: relative;
+  background-color: #ffbcbc;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.greeting-section {
+  text-align: center;
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+.greeting {
+  font-size: 24px;
+  font-weight: bold;
+  color: #ff5c5c;
+  margin-bottom: 10px;
+}
+
+.heart {
+  display: inline-block;
+  font-size: 22px;
+  margin-left: 5px;
+}
+
+/* Main Day Info */
+.day-info {
+  display: flex;
+  justify-content: center;
+  margin: 0 auto 20px;
+}
+
+.heart-container {
+  width: 220px;
+  height: 220px;
+  background: linear-gradient(to bottom, #ff9a9e, #ff5c5c);
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  position: relative;
+  box-shadow: 0 8px 20px rgba(255, 92, 92, 0.3);
+}
+
+.heart-container::before {
+  content: '';
+  position: absolute;
+  top: -5px;
+  left: -5px;
+  right: -5px;
+  bottom: -5px;
+  border: 2px solid white;
+  border-radius: 50%;
+}
+
+.day-text {
+  font-size: 42px;
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.cycle-label {
+  font-size: 16px;
+  opacity: 0.9;
+}
+
+.cycle-stage {
+  font-size: 28px;
+  font-weight: bold;
+  margin-top: 5px;
+}
+
+.calendar-section {
+  margin: 15px auto;
+  width: 100%;
+  max-width: 800px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.month-indicator {
+  display: flex;
+  align-items: center;
+  background-color: rgba(255, 255, 255, 0.4);
+  border-radius: 20px;
+  padding: 8px 20px;
+  margin-bottom: 15px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.month-indicator:hover {
+  background-color: rgba(255, 255, 255, 0.6);
+  transform: scale(1.03);
+}
+
+.month-text {
+  font-size: 16px;
+  color: #555;
+  margin-left: 8px;
+}
+
+.days-row {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.day-circle {
+  width: 60px;
+  height: 80px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.day-circle .day-number {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: white;
+  color: #999;
+  font-weight: bold;
+  margin-bottom: 5px;
+  font-size: 16px;
+  transition: all 0.2s ease;
+}
+
+.day-circle:hover .day-number {
+  transform: scale(1.1);
+}
+
+.day-circle .day-label {
+  font-size: 14px;
+  color: #555;
+}
+
+.day-circle.active .day-number {
+  background-color: #ff9a9e;
+  color: white;
+}
+
+.day-circle.selected .day-number {
+  background-color: #ff5c5c;
+  color: white;
+}
+
+/* Info Section */
+.info-section {
+  width: 100%;
+  max-width: 600px;
+  margin: 20px auto;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.info-card {
+  background-color: white;
+  border-radius: 15px;
+  padding: 20px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.info-card h3 {
+  color: #ff5c5c;
+  margin-bottom: 10px;
+  font-size: 18px;
+}
+
+.info-card p {
+  color: #555;
+  margin-bottom: 8px;
+  font-size: 15px;
+}
+
+/* Bottom Navigation */
+.bottom-nav {
+  height: 70px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #ff9a9e;
+  gap: 50px;
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.nav-item {
+  width: 45px;
+  height: 45px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 50%;
+  background-color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.nav-item:hover {
+  transform: scale(1.1);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+}
+
+.nav-item.active {
+  background-color: #ff5c5c;
+}
+
+.add-btn {
+  background-color: #ff5c5c;
+  color: white;
+  font-size: 24px;
+  width: 55px;
+  height: 55px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.home-btn, .profile-btn {
+  color: #ff5c5c;
+  font-size: 20px;
+}
+
+.nav-item.active .nav-icon {
+  color: white;
+}

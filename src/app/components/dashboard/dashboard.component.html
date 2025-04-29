@@ -1,0 +1,57 @@
+<div class="app-container">
+  <div class="content-area">
+    <div class="greeting-section">
+      <p class="greeting">Hi there beautiful! <span class="heart">❤️</span></p>
+    </div>
+    
+    <!-- Main Content -->
+    <div class="day-info">
+      <div class="heart-container">
+        <div class="day-text">Day {{currentDay}}</div>
+        <div class="cycle-label">Cycle Stage:</div>
+        <div class="cycle-stage">{{cycleStage}}</div>
+      </div>
+    </div>
+    
+    <div class="calendar-section">
+      <div class="month-indicator" (click)="navigateToCalendarView()">
+        <span class="calendar-icon">📅</span>
+        <span class="month-text">{{currentMonth}}</span>
+      </div>
+      
+      <div class="days-row">
+        <div *ngFor="let date of dates" 
+             class="day-circle" 
+             [ngClass]="{'active': date.active, 'selected': date.selected}">
+          <div class="day-number">{{date.day}}</div>
+          <div class="day-label">{{date.dayOfWeek}}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="info-section">
+      <div class="info-card">
+        <h3>Period Prediction</h3>
+        <p>Your next period is expected on <strong>March 15, 2025</strong></p>
+      </div>
+      
+      <div class="info-card">
+        <h3>Cycle Insights</h3>
+        <p>Your average cycle length is <strong>28 days</strong></p>
+        <p>Your period typically lasts <strong>5 days</strong></p>
+      </div>
+    </div>
+  </div>
+  
+  <div class="bottom-nav">
+    <div class="nav-item home-btn active">
+      <div class="nav-icon">🏠</div>
+    </div>
+    <div class="nav-item add-btn" (click)="openCycleForm()">
+      <div class="nav-icon">+</div>
+    </div>
+    <div class="nav-item profile-btn" (click)="navigateToProfile()">
+      <div class="nav-icon">👤</div>
+    </div>
+  </div>
+</div>
