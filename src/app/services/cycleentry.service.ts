@@ -13,34 +13,34 @@ export class CycleEntryService {
   
   constructor(private http: HttpClient, private authService: AuthService) { }
   
-  getEntryById(id: number): Observable<CycleEntry> {
-    return this.http.get<CycleEntry>(${this.baseUrl}/${id}, {
+  getEntryById(id: number): Observable<Cycleentry> {
+    return this.http.get<Cycleentry>(${this.baseUrl}/${id}, {
       headers: this.authService.getAuthHeaders()
     });
   }
   
-  getEntriesByCycleId(cycleId: number): Observable<CycleEntry[]> {
-    return this.http.get<CycleEntry[]>(${this.baseUrl}/cycle/${cycleId}, {
+  getEntriesByCycleId(cycleId: number): Observable<Cycleentry[]> {
+    return this.http.get<Cycleentry[]>(${this.baseUrl}/cycle/${cycleId}, {
       headers: this.authService.getAuthHeaders()
     });
   }
   
-  getEntriesByCalendarId(calendarId: number): Observable<CycleEntry[]> {
-    return this.http.get<CycleEntry[]>(${this.baseUrl}/calendar/${calendarId}, {
+  getEntriesByCalendarId(calendarId: number): Observable<Cycleentry[]> {
+    return this.http.get<Cycleentry[]>(${this.baseUrl}/calendar/${calendarId}, {
       headers: this.authService.getAuthHeaders()
     });
   }
   
-  getEntriesByDate(date: Date): Observable<CycleEntry[]> {
+  getEntriesByDate(date: Date): Observable<Cycleentry[]> {
     // Format date as YYYY-MM-DD
     const formattedDate = date.toISOString().split('T')[0];
-    return this.http.get<CycleEntry[]>(${this.baseUrl}/date/${formattedDate}, {
+    return this.http.get<Cycleentry[]>(${this.baseUrl}/date/${formattedDate}, {
       headers: this.authService.getAuthHeaders()
     });
   }
   
-  createEntry(entry: CycleEntry): Observable<CycleEntry> {
-    return this.http.post<CycleEntry>(${this.baseUrl}, entry, {
+  createEntry(entry: Cycleentry): Observable<Cycleentry> {
+    return this.http.post<Cycleentry>(${this.baseUrl}, entry, {
       headers: this.authService.getAuthHeaders()
     });
   }

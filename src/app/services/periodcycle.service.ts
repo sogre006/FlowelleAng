@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
+import { Periodcycle } from '../models/periodcycle';
 import { environment } from '../environments/environment';
 import { AuthService } from './auth.services';
 
@@ -12,25 +13,25 @@ export class PeriodCycleService {
   
   constructor(private http: HttpClient, private authService: AuthService) { }
   
-  getCyclesByUserId(userId: number): Observable<PeriodCycle[]> {
-    return this.http.get<PeriodCycle[]>(${this.baseUrl}/user/${userId}, {
+  getCyclesByUserId(userId: number): Observable<Periodcycle[]> {
+    return this.http.get<Periodcycle[]>(${this.baseUrl}/user/${userId}, {
       headers: this.authService.getAuthHeaders()
     });
   }
   
-  getCycleById(id: number): Observable<PeriodCycle> {
-    return this.http.get<PeriodCycle>(${this.baseUrl}/${id}, {
+  getCycleById(id: number): Observable<Periodcycle> {
+    return this.http.get<Periodcycle>(${this.baseUrl}/${id}, {
       headers: this.authService.getAuthHeaders()
     });
   }
   
-  createCycle(cycle: PeriodCycle): Observable<PeriodCycle> {
-    return this.http.post<PeriodCycle>(${this.baseUrl}, cycle, {
+  createCycle(cycle: Periodcycle): Observable<Periodcycle> {
+    return this.http.post<Periodcycle>(${this.baseUrl}, cycle, {
       headers: this.authService.getAuthHeaders()
     });
   }
   
-  updateCycle(cycle: PeriodCycle): Observable<any> {
+  updateCycle(cycle: Periodcycle): Observable<any> {
     return this.http.put(${this.baseUrl}, cycle, {
       headers: this.authService.getAuthHeaders()
     });

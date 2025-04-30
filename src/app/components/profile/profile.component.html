@@ -4,26 +4,80 @@
   </div>
 
   <div class="profile-content">
-    <div class="user-profile-card">
+    <!-- Loading Indicator -->
+    <div *ngIf="isLoading" class="loading-container">
+      <mat-spinner diameter="40"></mat-spinner>
+    </div>
+
+    <!-- Error Message -->
+    <div *ngIf="errorMessage" class="error-message">
+      {{errorMessage}}
+    </div>
+
+    <!-- User Profile Card -->
+    <div *ngIf="user && !isLoading" class="user-profile-card">
       <div class="avatar-container">
-        <div class="avatar">{{userName.charAt(0)}}</div>
+        <div class="avatar">{{user.name.charAt(0)}}</div>
       </div>
       <div class="user-info">
-        <h2 class="user-name">{{userName}}</h2>
-        <p class="user-email">{{userEmail}}</p>
+        <h2 class="user-name">{{user.name}}</h2>
+        <p class="user-email">{{user.email}}</p>
       </div>
     </div>
 
-    <div class="menu-section">
-      <div *ngFor="let item of menuItems" 
-           class="menu-item" 
-           (click)="openMenu(item)">
-        <div class="menu-icon">{{item.icon}}</div>
-        <div class="menu-label">{{item.label}}</div>
-        <div *ngIf="item.hasArrow" class="menu-arrow">›</div>
-      </div>
-    </div>
+    <!-- Profile Edit Form -->
+    <form [formGroup]="profileForm" (ngSubmit)="updateProfile()" class="profile-form" *ngIf="user && !isLoading">
+      <mat-form-field appearance="outline" class="form-field">
+        <mat-label>Name</mat-label>
+        <input matInput formControlName="name">
+        <mat-error *ngIf="profileForm.controls['name'].hasError('required')">
+          Name is required
+        </mat-error>
+        <mat-error *ngIf="profileForm.controls['name'].hasError('minlength')">
+          Name must be at least 2 characters
+        </mat-error>
+      </mat-form-field>
 
+      <mat-form-field appearance="outline" class="form-field">
+        <mat-label>Email</mat-label>
+        <input matInput formControlName="email" type="email">
+        <mat-error *ngIf="profileForm.controls['email'].hasError('required')">
+          Email is required
+        </mat-error>
+        <mat-error *ngIf="profileForm.controls['email'].hasError('email')">
+          Please enter a valid email address
+        </mat-error>
+      </mat-form-field>
+
+      <div class="form-actions">
+        <button 
+          *ngIf="!editMode" 
+          type="button" 
+          mat-raised-button 
+          color="primary" 
+          (click)="toggleEditMode()">
+          Edit Profile
+        </button>
+        
+        <ng-container *ngIf="editMode">
+          <button 
+            type="button" 
+            mat-stroked-button 
+            (click)="toggleEditMode()">
+            Cancel
+          </button>
+          <button 
+            type="submit" 
+            mat-raised-button 
+            color="primary" 
+            [disabled]="profileForm.invalid || isLoading">
+            Save Changes
+          </button>
+        </ng-container>
+      </div>
+    </form>
+    
+    <!-- Logout Button -->
     <div class="logout-section">
       <button class="logout-button" (click)="logout()">
         <span class="logout-icon">↪</span>
@@ -32,6 +86,7 @@
     </div>
   </div>
 
+  <!-- Bottom Navigation -->
   <div class="bottom-nav">
     <div class="nav-item home-btn" (click)="navigateToDashboard()">
       <div class="nav-icon">🏠</div>

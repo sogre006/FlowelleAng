@@ -20,6 +20,10 @@ export class AuthService {
     localStorage.removeItem('headerValue');
   }
   
+  get isAuthenticated(): boolean {
+    return localStorage.getItem('isAuthenticated') === 'true';
+  }
+  
   getAuthHeaders(): { [header: string]: string } {
     return {
       'X-My-Request-Header': 'Abc123!!!'
