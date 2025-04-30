@@ -1,43 +1,46 @@
-<div class="app-container">
-    <div class="content-area">
-      <div class="page-title">Profile</div>
-      
-      <!-- Profile Header -->
-      <div class="profile-header">
-        <div class="user-info">
-          <h1 class="user-name">{{userName}}</h1>
-          <p class="user-handle">{{userHandle}}</p>
-        </div>
+<div class="profile-container">
+  <div class="profile-header">
+    <h1>Profile</h1>
+  </div>
+
+  <div class="profile-content">
+    <div class="user-profile-card">
+      <div class="avatar-container">
+        <div class="avatar">{{userName.charAt(0)}}</div>
       </div>
-      
-      <!-- Menu Options -->
-      <div class="menu-options">
-        <div *ngFor="let item of menuItems" class="menu-item">
-          <div class="menu-icon">{{item.icon}}</div>
-          <div class="menu-label">{{item.label}}</div>
-          <div *ngIf="item.hasArrow" class="menu-arrow">›</div>
-        </div>
-      </div>
-      
-      <!-- Logout Button -->
-      <div class="logout-section">
-        <button class="logout-button" (click)="logout()">
-          <span class="logout-icon">↪</span>
-          <span class="logout-text">Logout</span>
-        </button>
+      <div class="user-info">
+        <h2 class="user-name">{{userName}}</h2>
+        <p class="user-email">{{userEmail}}</p>
       </div>
     </div>
-    
-    <!-- Bottom Navigation -->
-    <div class="bottom-nav">
-      <div class="nav-item home-btn" (click)="navigateToHome()">
-        <div class="nav-icon">🏠</div>
+
+    <div class="menu-section">
+      <div *ngFor="let item of menuItems" 
+           class="menu-item" 
+           (click)="openMenu(item)">
+        <div class="menu-icon">{{item.icon}}</div>
+        <div class="menu-label">{{item.label}}</div>
+        <div *ngIf="item.hasArrow" class="menu-arrow">›</div>
       </div>
-      <div class="nav-item add-btn">
-        <div class="nav-icon">+</div>
-      </div>
-      <div class="nav-item profile-btn active">
-        <div class="nav-icon">👤</div>
-      </div>
+    </div>
+
+    <div class="logout-section">
+      <button class="logout-button" (click)="logout()">
+        <span class="logout-icon">↪</span>
+        <span class="logout-text">Logout</span>
+      </button>
     </div>
   </div>
+
+  <div class="bottom-nav">
+    <div class="nav-item home-btn" (click)="navigateToDashboard()">
+      <div class="nav-icon">🏠</div>
+    </div>
+    <div class="nav-item add-btn" (click)="openCycleForm()">
+      <div class="nav-icon">+</div>
+    </div>
+    <div class="nav-item profile-btn active">
+      <div class="nav-icon">👤</div>
+    </div>
+  </div>
+</div>

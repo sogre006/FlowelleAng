@@ -1,185 +1,195 @@
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    font-family: 'Segoe UI', 'Roboto', sans-serif;
-  }
-  
-  .app-container {
-    width: 100vw;
-    height: 100vh;
-    background-color: #ffbcbc;
-    overflow: hidden;
-    position: relative;
-    display: grid;
-    grid-template-rows: 1fr auto;
-  }
-  
-  .content-area {
-    display: flex;
-    flex-direction: column;
-    position: relative;
-    background-color: #ffbcbc;
-    padding: 20px;
-    overflow-y: auto;
-  }
-  
-  .page-title {
-    text-align: center;
-    font-size: 24px;
-    font-weight: bold;
-    padding: 0 0 15px;
-    color: #333;
-  }
-  
-  /* Profile Header */
-  .profile-header {
-    background: linear-gradient(to bottom, #ff9a9e, #ff5c5c);
-    border-radius: 15px;
-    margin: 0 auto 25px;
-    padding: 25px;
-    text-align: center;
-    box-shadow: 0 5px 15px rgba(255, 92, 92, 0.2);
-    max-width: 600px;
-    width: 100%;
-  }
-  
-  .user-name {
-    color: white;
-    font-size: 32px;
-    font-weight: bold;
-    margin-bottom: 8px;
-  }
-  
-  .user-handle {
-    color: white;
-    font-size: 18px;
-    opacity: 0.9;
-  }
-  
-  /* Menu Options */
-  .menu-options {
-    background-color: white;
-    border-radius: 15px 15px 0 0;
-    padding: 20px;
-    max-width: 600px;
-    margin: 0 auto;
-    width: 100%;
-    flex: 1;
-  }
-  
-  .menu-item {
-    display: flex;
-    align-items: center;
-    padding: 15px 10px;
-    border-bottom: 1px solid #f0f0f0;
-    transition: all 0.2s ease;
-    cursor: pointer;
-  }
-  
-  .menu-item:hover {
-    background-color: #f9f9f9;
-  }
-  
-  .menu-icon {
-    width: 35px;
-    height: 35px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin-right: 15px;
-    font-size: 20px;
-    color: #ff5c5c;
-  }
-  
-  .menu-label {
-    flex: 1;
-    font-size: 16px;
-    color: #333;
-  }
-  
-  .menu-arrow {
-    font-size: 24px;
-    color: #ccc;
-  }
-  
-  /* Logout Button */
-  .logout-section {
-    padding: 15px 20px;
-    background-color: white;
-    max-width: 600px;
-    margin: 0 auto;
-    width: 100%;
-    border-radius: 0 0 15px 15px;
-  }
-  
-  .logout-button {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 12px;
-    border: none;
-    background-color: transparent;
-    color: #999;
-    font-size: 16px;
-    cursor: pointer;
-    width: 100%;
-  }
-  
-  .logout-button:hover {
-    color: #ff5c5c;
-  }
-  
-  .logout-icon {
-    margin-right: 10px;
-    font-size: 18px;
-  }
-  
-  /* Bottom Navigation */
-  .bottom-nav {
-    height: 70px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background-color: #ff9a9e;
-    gap: 50px;
-    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
-  }
-  
-  .nav-item {
-    width: 45px;
-    height: 45px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    border-radius: 50%;
-    background-color: white;
-    cursor: pointer;
-    transition: all 0.2s ease;
-  }
-  
-  .nav-item:hover {
-    transform: scale(1.1);
-  }
-  
-  .nav-item.active {
-    background-color: #ff5c5c;
-  }
-  
-  .add-btn {
-    background-color: #ff5c5c;
-    color: white;
-    font-size: 24px;
-    width: 55px;
-    height: 55px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  }
-  
-  .home-btn, .profile-btn {
-    color: #ff5c5c;
-    font-size: 20px;
-  }
-  
-  .nav-item.active .nav-icon {
-    color: white;
-  }
+.profile-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100vh;
+  background-color: #f9f9f9;
+}
+
+.profile-header {
+  padding: 15px;
+  background-color: #ff9a9e;
+  color: white;
+  text-align: center;
+}
+
+.profile-header h1 {
+  font-size: 20px;
+  font-weight: normal;
+  margin: 0;
+}
+
+.profile-content {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.user-profile-card {
+  background-color: white;
+  border-radius: 15px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+}
+
+.avatar-container {
+  margin-right: 15px;
+}
+
+.avatar {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: linear-gradient(to bottom right, #ff9a9e, #ff5c5c);
+  color: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 26px;
+  font-weight: bold;
+}
+
+.user-info {
+  flex: 1;
+}
+
+.user-name {
+  font-size: 20px;
+  color: #333;
+  margin: 0 0 5px 0;
+}
+
+.user-email {
+  font-size: 14px;
+  color: #777;
+  margin: 0;
+}
+
+.menu-section {
+  background-color: white;
+  border-radius: 15px;
+  overflow: hidden;
+  margin-bottom: 20px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  padding: 15px;
+  border-bottom: 1px solid #f0f0f0;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.menu-item:last-child {
+  border-bottom: none;
+}
+
+.menu-item:hover {
+  background-color: #f9f9f9;
+}
+
+.menu-icon {
+  width: 30px;
+  height: 30px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-right: 15px;
+  font-size: 18px;
+  color: #ff5c5c;
+}
+
+.menu-label {
+  flex: 1;
+  font-size: 16px;
+  color: #333;
+}
+
+.menu-arrow {
+  font-size: 22px;
+  color: #ccc;
+}
+
+.logout-section {
+  background-color: white;
+  border-radius: 15px;
+  padding: 15px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+}
+
+.logout-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 12px;
+  border: none;
+  background-color: transparent;
+  color: #ff5c5c;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.logout-button:hover {
+  background-color: rgba(255, 92, 92, 0.05);
+}
+
+.logout-icon {
+  margin-right: 10px;
+  font-size: 18px;
+}
+
+.bottom-nav {
+  height: 70px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #ff9a9e;
+  gap: 50px;
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.nav-item {
+  width: 45px;
+  height: 45px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 50%;
+  background-color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.nav-item:hover {
+  transform: scale(1.1);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+}
+
+.nav-item.active {
+  background-color: #ff5c5c;
+}
+
+.add-btn {
+  background-color: #ff5c5c;
+  color: white;
+  font-size: 24px;
+  width: 55px;
+  height: 55px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.home-btn, .profile-btn {
+  color: #ff5c5c;
+  font-size: 20px;
+}
+
+.nav-item.active .nav-icon {
+  color: white;
+}
