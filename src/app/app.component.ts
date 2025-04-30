@@ -10,5 +10,5 @@ import { RouterOutlet, RouterModule } from '@angular/router';
   styleUrl: './app.component.css'
 })
 export class AppComponent {
-  title = 'FlowelleA'; //make sure this is the name you gave the project (i redid the whole thing so it's now called FlowelleA for me)
+  title = 'FlowelleAng'; 
 }

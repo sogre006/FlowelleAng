@@ -9,24 +9,24 @@ import { AuthService } from './auth.services';
   providedIn: 'root'
 })
 export class UserService {
-  private baseUrl = ${environment.apiUrl}/user;
+  private baseUrl = `${environment.apiUrl}/user`;
   
   constructor(private http: HttpClient, private authService: AuthService) { }
   
   getUserById(id: number): Observable<User> {
-    return this.http.get<User>(${this.baseUrl}/${id}, {
+    return this.http.get<User>(`${this.baseUrl}/${id}`, {
       headers: this.authService.getAuthHeaders()
     });
   }
   
   updateUser(user: User): Observable<any> {
-    return this.http.put(${this.baseUrl}, user, {
+    return this.http.put(`${this.baseUrl}`, user, {
       headers: this.authService.getAuthHeaders()
     });
   }
   
   updatePassword(userId: number, password: string): Observable<any> {
-    return this.http.put(${this.baseUrl}/password, { userId, password }, {
+    return this.http.put(`${this.baseUrl}/password`, { userId, password }, {
       headers: this.authService.getAuthHeaders()
     });
   }

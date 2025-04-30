@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { CalendarService } from '../../services/calendar.service';
 import { PeriodCycleService } from '../../services/periodcycle.service';
 import { CycleEntryService } from '../../services/cycleentry.service';
@@ -32,7 +33,7 @@ interface CalendarDay {
 @Component({
   selector: 'app-calendar-view',
   standalone: true,
-  imports: [CommonModule, MatProgressSpinnerModule],
+  imports: [CommonModule, MatProgressSpinnerModule, MatSnackBarModule],
   templateUrl: './calendar-view.component.html',
   styleUrls: ['./calendar-view.component.css']
 })
@@ -321,7 +322,7 @@ export class CalendarViewComponent implements OnInit {
       const selectedDay = this.monthDays.find(d => d.day === day);
       
       if (selectedDay && selectedDay.date) {
-        console.log(Selected date: ${selectedDay.date.toLocaleDateString()});
+        console.log(`Selected date: ${selectedDay.date.toLocaleDateString()}`);
         
         // Here you would typically:
         // 1. Update UI to show more details about the selected day

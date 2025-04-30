@@ -277,7 +277,7 @@ export class CycleFormComponent implements OnInit {
         this.saveEntriesSequentially(entries, index + 1);
       },
       error: (error) => {
-        console.error(Error saving entry ${index}:, error);
+        console.error(`Error saving entry ${index}:`, error);
         // Continue with next entry even if one fails
         this.saveEntriesSequentially(entries, index + 1);
       }
