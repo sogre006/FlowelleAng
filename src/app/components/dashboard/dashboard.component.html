@@ -1,57 +1,113 @@
-<div class="app-container">
-  <div class="content-area">
-    <div class="greeting-section">
-      <p class="greeting">Hi there beautiful! <span class="heart">❤️</span></p>
+<div class="dashboard-container">
+  <!-- Header -->
+  <header class="dashboard-header">
+    <h1>Period Tracker</h1>
+    <div class="header-actions">
+      <button mat-icon-button [matMenuTriggerFor]="menu" aria-label="Menu">
+        <mat-icon>menu</mat-icon>
+      </button>
+      <mat-menu #menu="matMenu">
+        <button mat-menu-item routerLink="/profile">
+          <mat-icon>person</mat-icon>
+          <span>Profile</span>
+        </button>
+        <button mat-menu-item (click)="logout()">
+          <mat-icon>exit_to_app</mat-icon>
+          <span>Logout</span>
+        </button>
+      </mat-menu>
     </div>
-    
-    <!-- Main Content -->
-    <div class="day-info">
-      <div class="heart-container">
-        <div class="day-text">Day {{currentDay}}</div>
-        <div class="cycle-label">Cycle Stage:</div>
-        <div class="cycle-stage">{{cycleStage}}</div>
-      </div>
-    </div>
-    
-    <div class="calendar-section">
-      <div class="month-indicator" (click)="navigateToCalendarView()">
-        <span class="calendar-icon">📅</span>
-        <span class="month-text">{{currentMonth}}</span>
-      </div>
-      
-      <div class="days-row">
-        <div *ngFor="let date of dates" 
-             class="day-circle" 
-             [ngClass]="{'active': date.active, 'selected': date.selected}">
-          <div class="day-number">{{date.day}}</div>
-          <div class="day-label">{{date.dayOfWeek}}</div>
-        </div>
-      </div>
+  </header>
+
+  <!-- Main Content -->
+  <div class="dashboard-content">
+    <!-- Loading Indicator -->
+    <div *ngIf="isLoading" class="loading-container">
+      <mat-spinner diameter="40"></mat-spinner>
     </div>
 
-    <div class="info-section">
-      <div class="info-card">
-        <h3>Period Prediction</h3>
-        <p>Your next period is expected on <strong>March 15, 2025</strong></p>
+    <!-- Error Message -->
+    <div *ngIf="errorMessage" class="error-message">
+      {{errorMessage}}
+    </div>
+
+    <!-- Cycle Summary Card -->
+    <mat-card *ngIf="!isLoading" class="summary-card">
+      <mat-card-content>
+        <div class="cycle-summary">
+          <div class="cycle-stats">
+            <div class="stat-item">
+              <span class="stat-value">{{averageCycleLength || '--'}}</span>
+              <span class="stat-label">Avg. Cycle (days)</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-value">{{averagePeriodLength || '--'}}</span>
+              <span class="stat-label">Avg. Period (days)</span>
+            </div>
+          </div>
+          <div class="prediction-info">
+            <div class="next-period">
+              <h3>Next Period</h3>
+              <p class="date">{{nextPeriodDate | date:'mediumDate' || 'Not enough data'}}</p>
+            </div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Cycles List -->
+    <div class="cycles-section">
+      <div class="section-header">
+        <h2>Your Cycles</h2>
+        <button mat-raised-button color="primary" routerLink="/cycle/add">
+          <mat-icon>add</mat-icon> Add New Cycle
+        </button>
       </div>
-      
-      <div class="info-card">
-        <h3>Cycle Insights</h3>
-        <p>Your average cycle length is <strong>28 days</strong></p>
-        <p>Your period typically lasts <strong>5 days</strong></p>
+
+      <mat-card *ngIf="recentCycles.length === 0 && !isLoading" class="empty-state">
+        <mat-card-content>
+          <p>You haven't recorded any cycles yet.</p>
+          <button mat-raised-button color="primary" routerLink="/cycle/add">
+            Add Your First Cycle
+          </button>
+        </mat-card-content>
+      </mat-card>
+
+      <div class="cycles-list" *ngIf="recentCycles.length > 0">
+        <mat-card *ngFor="let cycle of recentCycles" class="cycle-card">
+          <mat-card-content>
+            <div class="cycle-dates">
+              <div class="date-range">
+                <span class="start-date">{{cycle.start_date | date:'mediumDate'}}</span>
+                <span class="date-separator">to</span>
+                <span class="end-date">{{cycle.end_date | date:'mediumDate'}}</span>
+              </div>
+              <div class="cycle-duration">
+                <span class="duration-value">{{cycle.duration}}</span>
+                <span class="duration-label">days</span>
+              </div>
+            </div>
+            <div class="cycle-actions">
+              <button mat-icon-button [routerLink]="['/cycle/edit', cycle.cycle_id]">
+                <mat-icon>edit</mat-icon>
+              </button>
+            </div>
+          </mat-card-content>
+        </mat-card>
       </div>
     </div>
   </div>
-  
-  <div class="bottom-nav">
-    <div class="nav-item home-btn active">
-      <div class="nav-icon">🏠</div>
-    </div>
-    <div class="nav-item add-btn" (click)="openCycleForm()">
-      <div class="nav-icon">+</div>
-    </div>
-    <div class="nav-item profile-btn" (click)="navigateToProfile()">
-      <div class="nav-icon">👤</div>
-    </div>
-  </div>
+
+  <!-- Navigation Footer -->
+  <nav class="dashboard-nav">
+    <a mat-raised-button color="primary" routerLink="/dashboard" class="active">
+      <mat-icon>home</mat-icon> Dashboard
+    </a>
+    <a mat-raised-button routerLink="/calendar">
+      <mat-icon>calendar_today</mat-icon> Calendar
+    </a>
+    <a mat-raised-button routerLink="/profile">
+      <mat-icon>person</mat-icon> Profile
+    </a>
+  </nav>
 </div>

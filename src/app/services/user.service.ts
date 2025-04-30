@@ -5,6 +5,14 @@ import { User } from '../models/user';
 import { environment } from '../environments/environment';
 import { AuthService } from './auth.services';
 
+// Define interface for user creation
+interface CreateUserRequest {
+  name: string;
+  email: string;
+  username: string;
+  password: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -29,5 +37,10 @@ export class UserService {
     return this.http.put(`${this.baseUrl}/password`, { userId, password }, {
       headers: this.authService.getAuthHeaders()
     });
+  }
+
+  // Add method to create a new user
+  createUser(user: CreateUserRequest): Observable<User> {
+    return this.http.post<User>(`${this.baseUrl}/register`, user);
   }
 }

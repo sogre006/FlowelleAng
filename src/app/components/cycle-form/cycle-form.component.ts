@@ -1,41 +1,34 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, TemplateRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
-import { MatSnackBar } from '@angular/material/snack-bar';
+import { Router, ActivatedRoute } from '@angular/router';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
-import { MatChipGrid, MatChipRow, MatChipsModule } from '@angular/material/chips';
+import { MatIconModule } from '@angular/material/icon';
+import { MatChipsModule } from '@angular/material/chips';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatNativeDateModule } from '@angular/material/core';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+
 import { PeriodCycleService } from '../../services/periodcycle.service';
-import { CalendarService } from '../../services/calendar.service';
 import { CycleEntryService } from '../../services/cycleentry.service';
 import { Periodcycle } from '../../models/periodcycle';
-import { Calendar } from '../../models/calendar';
-import { Cycleentry } from '../../models/cycleentry';
 
 interface Symptom {
+  id: string;
   name: string;
-  selected: boolean;
-  icon: string;
+  icon?: string;
 }
 
-/**
- * CycleFormComponent - Enhanced cycle entry form with service integration
- * 
- * Allows users to add or edit cycle data including:
- * - Period dates (start and end)
- * - Symptoms
- * - Notes
- * 
- * The component saves data to multiple tables as needed:
- * - PeriodCycle for the main cycle data
- * - Calendar for month views
- * - CycleEntry for individual day entries
- */
+// Separate interface for cycle notes storage
+interface CycleNotes {
+  cycleId: number;
+  notes: string;
+}
+
 @Component({
   selector: 'app-cycle-form',
   standalone: true,
@@ -48,13 +41,18 @@ interface Symptom {
     MatFormFieldModule,
     MatInputModule,
     MatButtonModule,
+    MatIconModule,
     MatChipsModule,
-    MatProgressSpinnerModule
+    MatProgressSpinnerModule,
+    MatSnackBarModule,
+    MatDialogModule
   ],
   templateUrl: './cycle-form.component.html',
   styleUrls: ['./cycle-form.component.css']
 })
 export class CycleFormComponent implements OnInit {
+  @ViewChild('deleteDialog') deleteDialog!: TemplateRef<any>;
+  
   // User data
   userId: number = 1; // This would normally come from an auth service
   
@@ -62,38 +60,39 @@ export class CycleFormComponent implements OnInit {
   cycleForm!: FormGroup;
   isLoading: boolean = false;
   errorMessage: string = '';
-  
-  // Symptoms tracking
-  symptoms: Symptom[] = [
-    { name: 'Cramps', selected: false, icon: '😣' },
-    { name: 'Headache', selected: false, icon: '🤕' },
-    { name: 'Bloating', selected: false, icon: '🫨' },
-    { name: 'Fatigue', selected: false, icon: '😴' },
-    { name: 'Mood Swings', selected: false, icon: '🥹' },
-    { name: 'Acne', selected: false, icon: '😬' },
-    { name: 'Breast Tenderness', selected: false, icon: '😖' },
-    { name: 'Backache', selected: false, icon: '🤕' }
-  ];
-  
-  // Date selection 
-  selectedSymptoms: string[] = [];
-  notes: string = '';
+  isEditMode: boolean = false;
+  cycleId: number | null = null;
   
   // Date constraints
   minDate: Date = new Date(new Date().getFullYear() - 1, 0, 1); // One year ago
   maxDate: Date = new Date(); // Today
   
+  // Symptoms options
+  availableSymptoms: Symptom[] = [
+    { id: 'cramps', name: 'Cramps' },
+    { id: 'headache', name: 'Headache' },
+    { id: 'bloating', name: 'Bloating' },
+    { id: 'fatigue', name: 'Fatigue' },
+    { id: 'mood_swings', name: 'Mood Swings' },
+    { id: 'acne', name: 'Acne' },
+    { id: 'breast_tenderness', name: 'Breast Tenderness' },
+    { id: 'backache', name: 'Backache' }
+  ];
+  
   constructor(
     private router: Router,
+    private route: ActivatedRoute,
     private formBuilder: FormBuilder,
     private periodCycleService: PeriodCycleService,
-    private calendarService: CalendarService,
     private cycleEntryService: CycleEntryService,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private dialog: MatDialog
   ) {}
   
   ngOnInit(): void {
     this.initForm();
+    this.checkForQueryParams();
+    this.checkForEditMode();
   }
   
   /**
@@ -103,8 +102,151 @@ export class CycleFormComponent implements OnInit {
     this.cycleForm = this.formBuilder.group({
       startDate: ['', [Validators.required]],
       endDate: ['', [Validators.required]],
-      notes: ['']
+      symptoms: [[]],
+      notes: [''] // Keep notes in the form but handle them separately
     }, { validators: this.dateRangeValidator });
+  }
+  
+  /**
+   * Check URL query parameters for default date
+   */
+  private checkForQueryParams(): void {
+    this.route.queryParams.subscribe(params => {
+      if (params['date']) {
+        try {
+          const selectedDate = new Date(params['date']);
+          if (!isNaN(selectedDate.getTime())) {
+            this.cycleForm.patchValue({
+              startDate: selectedDate
+            });
+            
+            // Set end date to same date by default
+            this.cycleForm.patchValue({
+              endDate: new Date(selectedDate)
+            });
+          }
+        } catch (e) {
+          console.error('Invalid date parameter:', e);
+        }
+      }
+    });
+  }
+  
+  /**
+   * Check if we're in edit mode and load cycle data if we are
+   */
+  private checkForEditMode(): void {
+    this.route.params.subscribe(params => {
+      if (params['cycle_id']) {
+        this.isEditMode = true;
+        this.cycleId = +params['cycle_id'];
+        this.loadCycleData(this.cycleId);
+      }
+    });
+  }
+  
+  /**
+   * Load cycle data for editing
+   */
+  private loadCycleData(cycleId: number): void {
+    this.isLoading = true;
+    this.errorMessage = '';
+    
+    this.periodCycleService.getCycleById(cycleId).subscribe({
+      next: (cycle) => {
+        // Populate form with cycle data
+        this.cycleForm.patchValue({
+          startDate: new Date(cycle.start_date),
+          endDate: new Date(cycle.end_date)
+        });
+        
+        // Load stored notes from localStorage
+        const notes = this.loadStoredNotes(cycleId);
+        if (notes) {
+          this.cycleForm.patchValue({ notes });
+        }
+        
+        // Load symptoms (this would need to be implemented in the backend)
+        this.loadCycleSymptoms(cycleId);
+        
+        this.isLoading = false;
+      },
+      error: (error) => {
+        console.error('Error loading cycle:', error);
+        this.errorMessage = 'Could not load cycle data. Please try again.';
+        this.isLoading = false;
+      }
+    });
+  }
+  
+  /**
+   * Load notes from localStorage
+   */
+  private loadStoredNotes(cycleId: number): string | null {
+    try {
+      const storedNotes = localStorage.getItem('cycleNotes');
+      if (storedNotes) {
+        const allNotes: CycleNotes[] = JSON.parse(storedNotes);
+        const cycleNotes = allNotes.find(note => note.cycleId === cycleId);
+        return cycleNotes ? cycleNotes.notes : null;
+      }
+    } catch (error) {
+      console.error('Error loading stored notes:', error);
+    }
+    return null;
+  }
+  
+  /**
+   * Save notes to localStorage
+   */
+  private saveNotesToStorage(cycleId: number, notes: string): void {
+    try {
+      const storedNotes = localStorage.getItem('cycleNotes');
+      let allNotes: CycleNotes[] = storedNotes ? JSON.parse(storedNotes) : [];
+      
+      // Find if notes for this cycle already exist
+      const existingIndex = allNotes.findIndex(note => note.cycleId === cycleId);
+      
+      if (existingIndex >= 0) {
+        // Update existing notes
+        allNotes[existingIndex].notes = notes;
+      } else {
+        // Add new notes
+        allNotes.push({ cycleId, notes });
+      }
+      
+      localStorage.setItem('cycleNotes', JSON.stringify(allNotes));
+    } catch (error) {
+      console.error('Error saving notes to storage:', error);
+    }
+  }
+  
+  /**
+   * Delete notes from localStorage
+   */
+  private deleteNotesFromStorage(cycleId: number): void {
+    try {
+      const storedNotes = localStorage.getItem('cycleNotes');
+      if (storedNotes) {
+        let allNotes: CycleNotes[] = JSON.parse(storedNotes);
+        allNotes = allNotes.filter(note => note.cycleId !== cycleId);
+        localStorage.setItem('cycleNotes', JSON.stringify(allNotes));
+      }
+    } catch (error) {
+      console.error('Error deleting notes from storage:', error);
+    }
+  }
+  
+  /**
+   * Load symptoms for a cycle (mock implementation)
+   */
+  private loadCycleSymptoms(cycleId: number): void {
+    // This would need to be implemented with a real service
+    // For now, we'll just simulate it
+    const mockSymptoms = ['cramps', 'fatigue']; // Example symptoms
+    this.cycleForm.patchValue({
+      symptoms: mockSymptoms
+    });
   }
   
   /**
@@ -128,22 +270,9 @@ export class CycleFormComponent implements OnInit {
   }
   
   /**
-   * Toggle a symptom's selected state
-   */
-  toggleSymptom(symptom: Symptom): void {
-    symptom.selected = !symptom.selected;
-    
-    if (symptom.selected) {
-      this.selectedSymptoms.push(symptom.name);
-    } else {
-      this.selectedSymptoms = this.selectedSymptoms.filter(name => name !== symptom.name);
-    }
-  }
-  
-  /**
    * Save the cycle data to the database
    */
-  saveCycleEntry(): void {
+  saveCycle(): void {
     if (this.cycleForm.invalid) {
       // Mark fields as touched to trigger validation messages
       Object.keys(this.cycleForm.controls).forEach(key => {
@@ -166,24 +295,47 @@ export class CycleFormComponent implements OnInit {
       ? formValues.endDate 
       : new Date(formValues.endDate);
     
-    // Calculate duration in days (database does this, but we need it for UI feedback)
+    // Calculate duration in days
     const durationMs = endDate.getTime() - startDate.getTime();
     const durationDays = Math.floor(durationMs / (1000 * 60 * 60 * 24)) + 1;
     
-    // Create the cycle object
-    const newCycle: Partial<Periodcycle> = {
+    // Create the cycle object without notes
+    const cycleData: Partial<Periodcycle> = {
       user_id: this.userId,
       start_date: startDate,
-      end_date: endDate
+      end_date: endDate,
+      duration: durationDays
     };
     
-    // First, save the cycle
-    this.periodCycleService.createCycle(newCycle as Periodcycle).subscribe({
+    if (this.isEditMode && this.cycleId) {
+      // Update existing cycle
+      cycleData.cycle_id = this.cycleId;
+      this.updateCycle(cycleData as Periodcycle, formValues.notes);
+    } else {
+      // Create new cycle
+      this.createCycle(cycleData as Periodcycle, formValues.notes);
+    }
+  }
+  
+  /**
+   * Create a new cycle
+   */
+  private createCycle(cycle: Periodcycle, notes: string): void {
+    this.periodCycleService.createCycle(cycle).subscribe({
       next: (savedCycle) => {
         console.log('Saved cycle data:', savedCycle);
         
-        // Now, check if we need to create a calendar for the month
-        this.createOrGetCalendar(startDate, savedCycle);
+        // Save symptoms (this would need to be implemented in the backend)
+        this.saveSymptoms(savedCycle.cycle_id, this.cycleForm.value.symptoms);
+        
+        // Save notes separately if present
+        if (notes && notes.trim()) {
+          this.saveNotesToStorage(savedCycle.cycle_id, notes);
+        }
+        
+        this.snackBar.open('Cycle saved successfully', 'Close', { duration: 3000 });
+        this.isLoading = false;
+        this.navigateBack();
       },
       error: (error) => {
         console.error('Error saving cycle:', error);
@@ -194,128 +346,97 @@ export class CycleFormComponent implements OnInit {
   }
   
   /**
-   * Create or get existing calendar for the month
+   * Update an existing cycle
    */
-  private createOrGetCalendar(date: Date, cycle: Periodcycle): void {
-    const month = date.toLocaleString('default', { month: 'long' });
-    const year = date.getFullYear();
-    
-    // First, try to get an existing calendar
-    this.calendarService.getCalendarByMonthYear(this.userId, date.getMonth() + 1, year)
-      .subscribe({
-        next: (calendar) => {
-          if (calendar) {
-            // Calendar exists, use it
-            this.createCycleEntries(cycle, calendar);
-          } else {
-            // Create a new calendar
-            const newCalendar: Partial<Calendar> = {
-              user_id: this.userId,
-              month: month,
-              year: year
-            };
-            
-            this.calendarService.createCalendar(newCalendar as Calendar).subscribe({
-              next: (savedCalendar) => {
-                this.createCycleEntries(cycle, savedCalendar);
-              },
-              error: (error) => {
-                console.error('Error creating calendar:', error);
-                this.handleSaveCompleted('partial', 'Could not create calendar, but cycle was saved.');
-              }
-            });
-          }
-        },
-        error: (error) => {
-          console.error('Error getting calendar:', error);
-          this.handleSaveCompleted('partial', 'Could not access calendar, but cycle was saved.');
-        }
-      });
-  }
-  
-  /**
-   * Create cycle entries for each day of the period
-   */
-  private createCycleEntries(cycle: Periodcycle, calendar: Calendar): void {
-    const startDate = new Date(cycle.start_date);
-    const endDate = new Date(cycle.end_date);
-    const entries: Partial<Cycleentry>[] = [];
-    
-    // Create an entry for each day in the period
-    const currentDate = new Date(startDate);
-    while (currentDate <= endDate) {
-      const entry: Partial<Cycleentry> = {
-        cycle_id: cycle.cycle_id,
-        calendar_id: calendar.calendar_id,
-        date: new Date(currentDate)
-      };
-      
-      entries.push(entry);
-      
-      // Move to the next day
-      currentDate.setDate(currentDate.getDate() + 1);
-    }
-    
-    // Save all entries in sequence
-    this.saveEntriesSequentially(entries, 0);
-  }
-  
-  /**
-   * Save entries one by one (sequentially)
-   * This could be optimized with a batch API, but this works for demonstration
-   */
-  private saveEntriesSequentially(entries: Partial<Cycleentry>[], index: number): void {
-    if (index >= entries.length) {
-      // All entries saved
-      this.handleSaveCompleted('success');
-      return;
-    }
-    
-    this.cycleEntryService.createEntry(entries[index] as Cycleentry).subscribe({
+  private updateCycle(cycle: Periodcycle, notes: string): void {
+    this.periodCycleService.updateCycle(cycle).subscribe({
       next: () => {
-        // Save next entry
-        this.saveEntriesSequentially(entries, index + 1);
+        // Save symptoms (this would need to be implemented in the backend)
+        if (cycle.cycle_id) {
+          this.saveSymptoms(cycle.cycle_id, this.cycleForm.value.symptoms);
+        
+          // Save notes separately if present
+          if (notes && notes.trim()) {
+            this.saveNotesToStorage(cycle.cycle_id, notes);
+          } else {
+            // Delete notes if empty
+            this.deleteNotesFromStorage(cycle.cycle_id);
+          }
+        }
+        
+        this.snackBar.open('Cycle updated successfully', 'Close', { duration: 3000 });
+        this.isLoading = false;
+        this.navigateBack();
       },
       error: (error) => {
-        console.error(`Error saving entry ${index}:`, error);
-        // Continue with next entry even if one fails
-        this.saveEntriesSequentially(entries, index + 1);
+        console.error('Error updating cycle:', error);
+        this.errorMessage = 'Could not update your cycle data. Please try again.';
+        this.isLoading = false;
       }
     });
   }
   
   /**
-   * Handle the completion of the save process
+   * Save symptoms for a cycle (mock implementation)
    */
-  private handleSaveCompleted(status: 'success' | 'partial' | 'error', message?: string): void {
-    this.isLoading = false;
+  private saveSymptoms(cycleId: number, symptoms: string[]): void {
+    // This would need to be implemented with a real service
+    console.log(`Saving symptoms for cycle ${cycleId}:`, symptoms);
+  }
+  
+  /**
+   * Open delete confirmation dialog
+   */
+  openDeleteConfirmation(): void {
+    const dialogRef = this.dialog.open(this.deleteDialog);
     
-    if (status === 'success') {
-      this.snackBar.open('Cycle data saved successfully', 'Close', {
-        duration: 3000
-      });
-      this.navigateToDashboard();
-    } else if (status === 'partial') {
-      this.snackBar.open(message || 'Cycle partially saved', 'Close', {
-        duration: 3000
-      });
-      this.navigateToDashboard();
+    dialogRef.afterClosed().subscribe(result => {
+      if (result && this.cycleId) {
+        this.deleteCycle(this.cycleId);
+      }
+    });
+  }
+  
+  /**
+   * Delete a cycle
+   */
+  deleteCycle(cycleId: number): void {
+    this.isLoading = true;
+    
+    this.periodCycleService.deleteCycle(cycleId, this.userId).subscribe({
+      next: () => {
+        // Also delete notes for this cycle
+        this.deleteNotesFromStorage(cycleId);
+        
+        this.snackBar.open('Cycle deleted successfully', 'Close', { duration: 3000 });
+        this.isLoading = false;
+        this.navigateBack();
+      },
+      error: (error) => {
+        console.error('Error deleting cycle:', error);
+        this.errorMessage = 'Could not delete the cycle. Please try again.';
+        this.isLoading = false;
+      }
+    });
+  }
+  
+  /**
+   * Navigate back to previous page or dashboard
+   */
+  navigateBack(): void {
+    // Check if we can go back in history
+    if (window.history.length > 1) {
+      window.history.back();
     } else {
-      this.errorMessage = message || 'Error saving cycle data';
+      // Default to dashboard
+      this.router.navigate(['/dashboard']);
     }
   }
   
   /**
-   * Navigate back to dashboard
-   */
-  navigateToDashboard(): void {
-    this.router.navigate(['/dashboard']);
-  }
-  
-  /**
-   * Cancel form and return to dashboard
+   * Cancel form and navigate back
    */
   cancel(): void {
-    this.navigateToDashboard();
+    this.navigateBack();
   }
 }

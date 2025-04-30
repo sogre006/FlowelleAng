@@ -1,8 +1,12 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
+import { MatMenuModule } from '@angular/material/menu';
+
 import { CalendarService } from '../../services/calendar.service';
 import { PeriodCycleService } from '../../services/periodcycle.service';
 import { CycleEntryService } from '../../services/cycleentry.service';
@@ -19,21 +23,22 @@ interface CalendarDay {
   isPeriod: boolean;
   isFertile: boolean;
   isOvulation: boolean;
+  isToday: boolean;
+  cycleId?: number;
 }
 
-/**
- * CalendarViewComponent - Provides a full month calendar view for cycle tracking
- * 
- * Improvements implemented:
- * 1. Dynamic calendar generation based on actual dates
- * 2. Integration with services to load real data
- * 3. Proper month navigation with date calculations
- * 4. Calculation of period days, fertile window, and ovulation based on data
- */
 @Component({
   selector: 'app-calendar-view',
   standalone: true,
-  imports: [CommonModule, MatProgressSpinnerModule, MatSnackBarModule],
+  imports: [
+    CommonModule, 
+    RouterModule,
+    MatProgressSpinnerModule, 
+    MatIconModule,
+    MatButtonModule,
+    MatCardModule,
+    MatMenuModule
+  ],
   templateUrl: './calendar-view.component.html',
   styleUrls: ['./calendar-view.component.css']
 })
@@ -46,6 +51,7 @@ export class CalendarViewComponent implements OnInit {
   // Calendar data
   weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   monthDays: CalendarDay[] = [];
+  selectedDay: CalendarDay | null = null;
   
   // Data from services
   userId: number = 1; // This would normally come from an auth service
@@ -57,9 +63,6 @@ export class CalendarViewComponent implements OnInit {
   isLoading: boolean = false;
   errorMessage: string = '';
 
-  /**
-   * Inject required services and router
-   */
   constructor(
     private router: Router,
     private calendarService: CalendarService,
@@ -67,9 +70,6 @@ export class CalendarViewComponent implements OnInit {
     private cycleEntryService: CycleEntryService
   ) {}
 
-  /**
-   * Initialize the component and load data
-   */
   ngOnInit(): void {
     this.initializeCalendarState();
     this.loadCalendarData();
@@ -96,13 +96,14 @@ export class CalendarViewComponent implements OnInit {
   private loadCalendarData(): void {
     this.isLoading = true;
     this.errorMessage = '';
+    this.selectedDay = null;
     
     // Get current month and year for API requests
-    const month = this.currentDate.toLocaleString('default', { month: 'long' });
+    const month = this.currentDate.getMonth() + 1; // JavaScript months are 0-based
     const year = this.currentDate.getFullYear();
     
     // Create the requests but don't execute them yet
-    const calendarRequest$ = this.calendarService.getCalendarByMonthYear(this.userId, this.currentDate.getMonth() + 1, year)
+    const calendarRequest$ = this.calendarService.getCalendarByMonthYear(this.userId, month, year)
       .pipe(catchError(error => {
         console.error('Error fetching calendar:', error);
         return of(null);
@@ -194,31 +195,38 @@ export class CalendarViewComponent implements OnInit {
         selected: false,
         isPeriod: false,
         isFertile: false,
-        isOvulation: false
+        isOvulation: false,
+        isToday: false
       });
     }
+    
+    // Today's date for comparison
+    const today = new Date();
     
     // Add days of the month
     for (let day = 1; day <= daysInMonth; day++) {
       const date = new Date(year, month, day);
       
       // Check if this date is a period day, fertile day, or ovulation day
-      const isPeriod = this.isPeriodDay(date);
-      const isFertile = this.isFertileDay(date);
-      const isOvulation = this.isOvulationDay(date);
+      const periodInfo = this.getDayInfo(date);
+      const isPeriod = periodInfo.isPeriod;
+      const isFertile = periodInfo.isFertile;
+      const isOvulation = periodInfo.isOvulation;
       const active = isPeriod || isFertile || isOvulation;
       
-      // Check if this is the selected day (current date by default)
-      const isToday = this.isSameDay(date, new Date());
+      // Check if this is today
+      const isToday = this.isSameDay(date, today);
       
       this.monthDays.push({
         day: day,
         date: date,
         active: active,
-        selected: isToday,
+        selected: false,
         isPeriod: isPeriod,
         isFertile: isFertile,
-        isOvulation: isOvulation
+        isOvulation: isOvulation,
+        isToday: isToday,
+        cycleId: periodInfo.cycleId
       });
     }
     
@@ -234,67 +242,71 @@ export class CalendarViewComponent implements OnInit {
         selected: false,
         isPeriod: false,
         isFertile: false,
-        isOvulation: false
+        isOvulation: false,
+        isToday: false
       });
     }
   }
   
   /**
-   * Check if a date is a period day based on cycle data
+   * Get detailed info about a specific day
    */
-  private isPeriodDay(date: Date): boolean {
-    return this.cycleData.some(cycle => {
+  private getDayInfo(date: Date): { isPeriod: boolean, isFertile: boolean, isOvulation: boolean, cycleId?: number } {
+    let isPeriod = false;
+    let isFertile = false;
+    let isOvulation = false;
+    let cycleId;
+    
+    // Check if this date is in any period cycle
+    for (const cycle of this.cycleData) {
       const startDate = new Date(cycle.start_date);
       const endDate = new Date(cycle.end_date);
-      return date >= startDate && date <= endDate;
-    });
-  }
-  
-  /**
-   * Calculate and check if a date is in the fertile window
-   * Typically 5 days before ovulation and the day of ovulation
-   */
-  private isFertileDay(date: Date): boolean {
-    for (const cycle of this.cycleData) {
-      const startDate = new Date(cycle.start_date);
       
-      // Find the ovulation day (typically 14 days before the next period)
-      // For simplicity, we'll estimate it as 14 days after the start of the current period
-      // In a real app, this should use a more sophisticated algorithm or data from the user
-      const ovulationDate = new Date(startDate);
-      ovulationDate.setDate(startDate.getDate() + 14);
+      // Check if date is within period
+      if (date >= startDate && date <= endDate) {
+        isPeriod = true;
+        cycleId = cycle.cycle_id;
+      }
       
-      // Fertile window is typically 5 days before ovulation and the day of ovulation
-      const fertileWindowStart = new Date(ovulationDate);
-      fertileWindowStart.setDate(ovulationDate.getDate() - 5);
+      // Calculate fertile window (5 days before ovulation + ovulation day)
+      const ovulationDate = this.calculateOvulationDate(cycle);
       
-      if (date >= fertileWindowStart && date <= ovulationDate) {
-        return true;
+      if (ovulationDate) {
+        // Fertile window starts 5 days before ovulation
+        const fertileStart = new Date(ovulationDate);
+        fertileStart.setDate(ovulationDate.getDate() - 5);
+        
+        // Check if date is in fertile window
+        if (date >= fertileStart && date <= ovulationDate) {
+          isFertile = true;
+          if (!cycleId) cycleId = cycle.cycle_id;
+        }
+        
+        // Check if date is ovulation day
+        if (this.isSameDay(date, ovulationDate)) {
+          isOvulation = true;
+          isFertile = false; // Ovulation takes precedence over fertile for display
+          if (!cycleId) cycleId = cycle.cycle_id;
+        }
       }
     }
     
-    return false;
+    return { isPeriod, isFertile, isOvulation, cycleId };
   }
   
   /**
-   * Check if a date is an ovulation day based on cycle data
-   * Typically occurs 14 days before the next period
+   * Calculate the ovulation date based on a cycle
+   * This is a simplified calculation - typically 14 days before next period
    */
-  private isOvulationDay(date: Date): boolean {
-    for (const cycle of this.cycleData) {
-      const startDate = new Date(cycle.start_date);
-      
-      // For simplicity, we'll estimate ovulation as 14 days after period start
-      // In a real app, this should use a more sophisticated algorithm
-      const ovulationDate = new Date(startDate);
-      ovulationDate.setDate(startDate.getDate() + 14);
-      
-      if (this.isSameDay(date, ovulationDate)) {
-        return true;
-      }
-    }
+  private calculateOvulationDate(cycle: Periodcycle): Date | null {
+    const startDate = new Date(cycle.start_date);
     
-    return false;
+    // For this simplified model, we'll estimate ovulation as 14 days after period start
+    // In a real app, this would use a more sophisticated algorithm
+    const ovulationDate = new Date(startDate);
+    ovulationDate.setDate(startDate.getDate() + 14);
+    
+    return ovulationDate;
   }
   
   /**
@@ -309,27 +321,47 @@ export class CalendarViewComponent implements OnInit {
   /**
    * Handle date selection in the calendar
    */
-  selectDate(day: number | null): void {
-    if (day !== null) {
-      // Find the day object
-      this.monthDays.forEach(item => {
-        if (item.day !== null) {
-          item.selected = item.day === day;
-        }
-      });
-      
-      // Get the selected day object
-      const selectedDay = this.monthDays.find(d => d.day === day);
-      
-      if (selectedDay && selectedDay.date) {
-        console.log(`Selected date: ${selectedDay.date.toLocaleDateString()}`);
-        
-        // Here you would typically:
-        // 1. Update UI to show more details about the selected day
-        // 2. Load any additional data for the selected day
-        // 3. Allow users to add or edit entries for this day
-      }
+  selectDate(day: CalendarDay): void {
+    if (day.day === null || day.date === null) {
+      return; // Don't select empty cells
     }
+    
+    // Deselect any previously selected day
+    this.monthDays.forEach(item => {
+      item.selected = false;
+    });
+    
+    // Select the clicked day
+    day.selected = true;
+    this.selectedDay = day;
+  }
+
+  /**
+   * Get formatted date string for selected day
+   */
+  getSelectedDateFormatted(): string {
+    if (!this.selectedDay || !this.selectedDay.date) {
+      return '';
+    }
+    
+    return this.selectedDay.date.toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  }
+  
+  /**
+   * Navigate to add cycle page with selected date
+   */
+  addCycleForDate(): void {
+    if (!this.selectedDay || !this.selectedDay.date) {
+      return;
+    }
+    
+    const dateStr = this.selectedDay.date.toISOString().split('T')[0];
+    this.router.navigate(['/cycle/add'], { queryParams: { date: dateStr } });
   }
 
   /**
@@ -351,26 +383,5 @@ export class CalendarViewComponent implements OnInit {
     
     // Reload the calendar data
     this.loadCalendarData();
-  }
-
-  /**
-   * Navigate to the dashboard
-   */
-  navigateToDashboard(): void {
-    this.router.navigate(['/dashboard']);
-  }
-
-  /**
-   * Open the cycle form to add a new entry
-   */
-  openCycleForm(): void {
-    this.router.navigate(['/cycle-form']);
-  }
-
-  /**
-   * Navigate to the user profile
-   */
-  navigateToProfile(): void {
-    this.router.navigate(['/profile']);
   }
 }
