@@ -3,15 +3,18 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { Cycleentry } from '../models/cycleentry';
 import { environment } from '../environments/environment';
-import { AuthService } from './auth.services';
+import { AuthService } from './auth.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class CycleEntryService {
-  private baseUrl = `${environment.apiUrl}/Cycleentry`;
+  private baseUrl = `${environment.apiUrl}/cycleentry`;
   
-  constructor(private http: HttpClient, private authService: AuthService) { }
+  constructor(
+    private http: HttpClient, 
+    private authService: AuthService
+  ) { }
   
   getEntryById(id: number): Observable<Cycleentry> {
     return this.http.get<Cycleentry>(`${this.baseUrl}/${id}`, {
@@ -44,10 +47,10 @@ export class CycleEntryService {
       headers: this.authService.getAuthHeaders()
     });
   }
-  
+
   deleteEntry(id: number): Observable<any> {
     return this.http.delete(`${this.baseUrl}/${id}`, {
-      headers: this.authService.getAuthHeaders()
+        headers: this.authService.getAuthHeaders()
     });
   }
 }

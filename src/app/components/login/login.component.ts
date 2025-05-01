@@ -11,16 +11,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { HttpErrorResponse } from '@angular/common/http';
 
-import { AuthService } from '../../services/auth.services';
-import { UserService } from '../../services/user.service';
-
-// Define interface for registration data
-interface RegisterRequest {
-  name: string;
-  email: string;
-  username: string;
-  password: string;
-}
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-login',
@@ -50,7 +41,6 @@ export class LoginComponent implements OnInit {
   constructor(
     private formBuilder: FormBuilder,
     private authService: AuthService,
-    private userService: UserService,
     private router: Router,
     private snackBar: MatSnackBar
   ) { }
@@ -64,7 +54,7 @@ export class LoginComponent implements OnInit {
 
     // Initialize login form
     this.loginForm = this.formBuilder.group({
-      username: ['', [Validators.required, Validators.minLength(3)]],
+      email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(6)]]
     });
 
@@ -72,7 +62,6 @@ export class LoginComponent implements OnInit {
     this.registerForm = this.formBuilder.group({
       name: ['', [Validators.required]],
       email: ['', [Validators.required, Validators.email]],
-      username: ['', [Validators.required, Validators.minLength(3)]],
       password: ['', [Validators.required, Validators.minLength(6)]]
     });
   }
@@ -89,24 +78,24 @@ export class LoginComponent implements OnInit {
       return;
     }
 
-    const { username, password } = this.loginForm.value;
+    const { email, password } = this.loginForm.value;
     this.isLoading = true;
     this.errorMessage = '';
 
-    this.authService.login(username, password).subscribe({
+    this.authService.login(email, password).subscribe({
       next: (response: any) => {
         this.isLoading = false;
         this.router.navigate(['/dashboard']);
       },
       error: (error: HttpErrorResponse) => {
         this.isLoading = false;
-        this.errorMessage = 'Invalid username or password. Please try again.';
+        this.errorMessage = 'Invalid email or password. Please try again.';
         console.error('Login error:', error);
       }
     });
   }
 
-  // Register form submission - using UserService instead of AuthService
+  // Register form submission
   onRegisterSubmit(): void {
     if (this.registerForm.invalid) {
       return;
@@ -115,32 +104,41 @@ export class LoginComponent implements OnInit {
     this.isLoading = true;
     this.errorMessage = '';
 
-    // Create a new user object from form
-    const newUser: RegisterRequest = {
+    // Create register request object
+    const registerData = {
       name: this.registerForm.value.name,
       email: this.registerForm.value.email,
-      username: this.registerForm.value.username,
       password: this.registerForm.value.password
     };
 
-    // Use UserService to create a new user account
-    this.userService.createUser(newUser).subscribe({
+    // Use AuthService to register
+    this.authService.register(registerData).subscribe({
       next: (response: any) => {
         this.isLoading = false;
         this.snackBar.open('Registration successful! Please login.', 'Close', {
           duration: 3000
         });
         this.isLoginMode = true; // Switch to login form
+        
+        // Pre-fill the login form with the email
+        this.loginForm.patchValue({
+          email: registerData.email
+        });
       },
       error: (error: HttpErrorResponse) => {
         this.isLoading = false;
-        this.errorMessage = 'Registration failed. Please try again.';
+        
+        if (error.status === 409) {
+          this.errorMessage = 'Email already exists. Please use a different email.';
+        } else {
+          this.errorMessage = 'Registration failed. Please try again.';
+        }
         console.error('Registration error:', error);
       }
     });
   }
 
   // Convenience getters for form fields
-  get username() { return this.loginForm.get('username'); }
+  get email() { return this.loginForm.get('email'); }
   get password() { return this.loginForm.get('password'); }
 }

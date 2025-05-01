@@ -12,12 +12,12 @@
       <!-- Login Form -->
       <form *ngIf="isLoginMode" [formGroup]="loginForm" (ngSubmit)="onLoginSubmit()">
         <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Username</mat-label>
-          <input matInput formControlName="username" placeholder="Enter your username" autocomplete="username">
-          <mat-icon matSuffix>person</mat-icon>
-          <mat-error *ngIf="loginForm.get('username')?.errors?.['required']">Username is required</mat-error>
-          <mat-error *ngIf="loginForm.get('username')?.errors?.['minlength']">
-            Username must be at least 3 characters
+          <mat-label>Email</mat-label>
+          <input matInput formControlName="email" placeholder="Enter your email" autocomplete="email" type="email">
+          <mat-icon matSuffix>email</mat-icon>
+          <mat-error *ngIf="loginForm.get('email')?.errors?.['required']">Email is required</mat-error>
+          <mat-error *ngIf="loginForm.get('email')?.errors?.['email']">
+            Please enter a valid email address
           </mat-error>
         </mat-form-field>
         
@@ -66,16 +66,6 @@
           <mat-icon matSuffix>email</mat-icon>
           <mat-error *ngIf="registerForm.get('email')?.errors?.['required']">Email is required</mat-error>
           <mat-error *ngIf="registerForm.get('email')?.errors?.['email']">Please enter a valid email</mat-error>
-        </mat-form-field>
-        
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Username</mat-label>
-          <input matInput formControlName="username" placeholder="Create a username" autocomplete="username">
-          <mat-icon matSuffix>person</mat-icon>
-          <mat-error *ngIf="registerForm.get('username')?.errors?.['required']">Username is required</mat-error>
-          <mat-error *ngIf="registerForm.get('username')?.errors?.['minlength']">
-            Username must be at least 3 characters
-          </mat-error>
         </mat-form-field>
         
         <mat-form-field appearance="outline" class="full-width">

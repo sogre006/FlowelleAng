@@ -2,17 +2,17 @@
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  background-color: #f5f5f5;
+  background-color: #f8f0f4;
 }
 
-/* Header styles */
+/* Header */
 .profile-header {
-  background-color: #ff9a9e;
-  color: white;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px;
+  background-color: #ff9a9e;
+  color: white;
+  padding: 12px 16px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
@@ -22,28 +22,32 @@
   font-weight: 500;
 }
 
-/* Main content area */
+/* Main content */
 .profile-content {
   flex: 1;
-  padding: 20px;
-  max-width: 800px;
-  margin: 0 auto;
+  max-width: 600px;
   width: 100%;
+  margin: 0 auto;
+  padding: 20px;
   box-sizing: border-box;
 }
 
-/* User info card */
-.user-info-card {
-  display: flex;
-  align-items: center;
-  background-color: white;
-  border-radius: 8px;
-  padding: 24px;
+/* Profile card */
+.profile-card {
   margin-bottom: 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
 }
 
-.user-avatar {
+/* Profile header section */
+.profile-header-section {
+  display: flex;
+  padding: 20px;
+  align-items: center;
+}
+
+.avatar-container {
   margin-right: 20px;
 }
 
@@ -56,45 +60,43 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  font-size: 40px;
+  font-size: 36px;
   font-weight: 500;
+  text-transform: uppercase;
 }
 
-.user-details {
+.profile-details {
   flex: 1;
 }
 
-.user-name {
+.profile-details h2 {
   margin: 0 0 4px 0;
   font-size: 24px;
   color: #333;
 }
 
-.user-email {
-  margin: 0;
+.profile-details .email {
+  margin: 0 0 4px 0;
   color: #666;
   font-size: 16px;
 }
 
-/* Form sections */
-.form-section {
-  background-color: white;
-  border-radius: 8px;
-  padding: 24px;
-  margin-bottom: 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+.profile-details .member-since {
+  margin: 0;
+  color: #999;
+  font-size: 14px;
 }
 
-.form-section h2 {
-  margin-top: 0;
-  margin-bottom: 20px;
-  color: #333;
-  font-size: 20px;
-  font-weight: 500;
+/* Profile actions */
+.profile-actions {
+  display: flex;
+  justify-content: flex-start;
+  gap: 12px;
+  padding: 16px;
 }
 
 /* Form fields */
-.form-field {
+.full-width {
   width: 100%;
   margin-bottom: 16px;
 }
@@ -112,39 +114,43 @@
   margin-right: 8px;
 }
 
-/* Settings section */
-.settings-list {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+/* Danger zone */
+.danger-zone {
+  border: 1px solid #ff5c5c;
+  margin-top: 32px;
 }
 
-.setting-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 0;
+.danger-zone mat-card-header {
+  color: #ff5c5c;
+  border-bottom: 1px solid #ffecec;
+  padding-bottom: 8px;
 }
 
-.setting-label {
-  display: flex;
-  align-items: center;
+.delete-account-button {
+  width: 100%;
+  margin-top: 16px;
 }
 
-.setting-icon {
-  margin-right: 12px;
-  color: #666;
+/* Delete dialog */
+.delete-dialog-title {
+  color: #d32f2f;
 }
 
-.language-select {
-  width: 120px;
-  margin: 0;
+.warning-text {
+  color: #d32f2f;
+  font-weight: 500;
 }
 
-/* Logout section */
-.logout-section {
+.confirm-field {
+  margin-top: 16px;
+}
+
+/* Logout container */
+.logout-container {
   display: flex;
   justify-content: center;
+  margin-top: 32px;
+  margin-bottom: 32px;
 }
 
 .logout-button {
@@ -152,23 +158,38 @@
   max-width: 200px;
 }
 
-/* Loading container */
+/* Loading & Message containers */
 .loading-container {
   display: flex;
   justify-content: center;
   padding: 40px 0;
 }
 
-/* Error message */
-.error-message {
-  background-color: #fee2e2;
-  color: #ef4444;
-  padding: 16px;
+.error-message, .success-message {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
   border-radius: 8px;
   margin-bottom: 20px;
 }
 
-/* Bottom navigation */
+.error-message {
+  background-color: #fdeded;
+  color: #d32f2f;
+  border: 1px solid #f4c7c7;
+}
+
+.success-message {
+  background-color: #edf7ed;
+  color: #2e7d32;
+  border: 1px solid #c7e6c7;
+}
+
+.error-message mat-icon, .success-message mat-icon {
+  margin-right: 8px;
+}
+
+/* Navigation Footer */
 .profile-nav {
   display: flex;
   justify-content: space-around;
@@ -181,24 +202,35 @@
   text-decoration: none;
   color: inherit;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  padding: 8px 16px;
 }
 
 .profile-nav a.active {
-  background-color: #ff9a9e;
-  color: white;
+  color: #ff5c5c;
 }
 
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .user-info-card {
+/* Responsive design */
+@media (max-width: 600px) {
+  .profile-header-section {
     flex-direction: column;
     text-align: center;
   }
   
-  .user-avatar {
+  .avatar-container {
     margin-right: 0;
     margin-bottom: 16px;
+  }
+  
+  .profile-actions {
+    flex-direction: column;
+  }
+  
+  .form-actions {
+    flex-direction: column-reverse;
+  }
+  
+  .form-actions button {
+    width: 100%;
   }
 }

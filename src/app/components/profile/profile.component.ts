@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, TemplateRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
@@ -9,15 +9,19 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatMenuModule } from '@angular/material/menu';
-import { MatSlideToggleModule, MatSlideToggleChange } from '@angular/material/slide-toggle';
-import { MatSelectModule, MatSelectChange } from '@angular/material/select';
+import { MatCardModule } from '@angular/material/card';
+import { MatDividerModule } from '@angular/material/divider';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { HttpErrorResponse } from '@angular/common/http';
 
 import { UserService } from '../../services/user.service';
-import { AuthService } from '../../services/auth.services';
+import { AuthService } from '../../services/auth.service';
 import { User } from '../../models/user';
 
 @Component({
   selector: 'app-profile',
+  templateUrl: './profile.component.html',
+  styleUrls: ['./profile.component.css'],
   standalone: true,
   imports: [
     CommonModule, 
@@ -31,69 +35,62 @@ import { User } from '../../models/user';
     MatProgressSpinnerModule,
     MatSnackBarModule,
     MatMenuModule,
-    MatSlideToggleModule,
-    MatSelectModule
-  ],
-  templateUrl: './profile.component.html',
-  styleUrls: ['./profile.component.css']
+    MatCardModule,
+    MatDividerModule,
+    MatDialogModule
+  ]
 })
 export class ProfileComponent implements OnInit {
+  @ViewChild('deleteAccountDialog') deleteAccountDialog!: TemplateRef<any>;
+  
   // User data
-  userId: number = 1; // This would normally come from an auth service
   user: User | null = null;
+  userId: number | null = null;
   
-  // Form handling - Profile
+  // Form states
   profileForm!: FormGroup;
-  editMode: boolean = false;
-  isLoading: boolean = false;
-  errorMessage: string = '';
-  
-  // Form handling - Password
   passwordForm!: FormGroup;
-  isPasswordLoading: boolean = false;
+  editMode: boolean = false;
+  changePasswordMode: boolean = false;
+  hidePassword: boolean = true;
   
-  // App settings
-  reminderEnabled: boolean = true;
-  darkModeEnabled: boolean = false;
-  selectedLanguage: string = 'en';
+  // Loading states
+  isLoading: boolean = false;
+  isProfileUpdating: boolean = false;
+  isPasswordUpdating: boolean = false;
+  
+  // Message states
+  errorMessage: string = '';
+  successMessage: string = '';
+  
+  // Delete account confirmation
+  deleteConfirmation: string = '';
   
   constructor(
-    private router: Router,
+    private formBuilder: FormBuilder,
     private userService: UserService,
     private authService: AuthService,
-    private formBuilder: FormBuilder,
-    private snackBar: MatSnackBar
+    private router: Router,
+    private snackBar: MatSnackBar,
+    private dialog: MatDialog
   ) {}
   
   ngOnInit(): void {
-    // Initialize forms
-    this.initProfileForm();
-    this.initPasswordForm();
-    
-    // Load user data
+    this.initForms();
     this.loadUserData();
-    
-    // Load app settings (from localStorage for example)
-    this.loadAppSettings();
   }
   
   /**
-   * Initialize the profile form
+   * Initialize all forms
    */
-  private initProfileForm(): void {
+  private initForms(): void {
+    // Profile edit form
     this.profileForm = this.formBuilder.group({
-      name: ['', [Validators.required, Validators.minLength(2)]],
-      email: ['', [Validators.required, Validators.email]]
+      name: ['', [Validators.required]],
+      email: [{ value: '', disabled: true }] // Email field is read-only
     });
     
-    // Disable the form initially (view-only mode)
-    this.profileForm.disable();
-  }
-  
-  /**
-   * Initialize the password change form
-   */
-  private initPasswordForm(): void {
+    // Password change form
     this.passwordForm = this.formBuilder.group({
       currentPassword: ['', [Validators.required]],
       newPassword: ['', [Validators.required, Validators.minLength(6)]],
@@ -102,11 +99,11 @@ export class ProfileComponent implements OnInit {
   }
   
   /**
-   * Validator to ensure passwords match
+   * Custom validator to ensure passwords match
    */
-  private passwordMatchValidator(form: FormGroup): { [key: string]: boolean } | null {
-    const newPassword = form.get('newPassword')?.value;
-    const confirmPassword = form.get('confirmPassword')?.value;
+  private passwordMatchValidator(group: FormGroup): { [key: string]: boolean } | null {
+    const newPassword = group.get('newPassword')?.value;
+    const confirmPassword = group.get('confirmPassword')?.value;
     
     if (newPassword && confirmPassword && newPassword !== confirmPassword) {
       return { 'passwordMismatch': true };
@@ -116,21 +113,54 @@ export class ProfileComponent implements OnInit {
   }
   
   /**
-   * Load user data from service
+   * Load user data using email from localStorage
    */
-  private loadUserData(): void {
+  loadUserData(): void {
     this.isLoading = true;
     this.errorMessage = '';
+    this.successMessage = '';
     
-    this.userService.getUserById(this.userId).subscribe({
-      next: (userData) => {
-        this.user = userData;
-        this.populateForm(userData);
+    // Get email from localStorage
+    const email = this.authService.getUserEmail();
+    
+    if (!email) {
+      this.errorMessage = 'User email not found. Please log in again.';
+      this.isLoading = false;
+      
+      // Redirect to login
+      setTimeout(() => {
+        this.authService.logout();
+        this.router.navigate(['/login']);
+      }, 2000);
+      
+      return;
+    }
+    
+    // Log the auth headers for debugging
+    console.log('Auth headers:', this.authService.getAuthHeaders());
+    
+    this.userService.getUserByEmail(email).subscribe({
+      next: (data) => {
+        console.log('User data loaded:', data);
+        this.user = data;
+        this.userId = data.user_id;
+        this.populateForm(data);
         this.isLoading = false;
       },
-      error: (error) => {
+      error: (error: HttpErrorResponse) => {
         console.error('Error loading user data:', error);
-        this.errorMessage = 'Could not load your profile. Please try again later.';
+        
+        if (error.status === 401) {
+          this.errorMessage = 'Authentication error. Please log in again.';
+          // Redirect to login after a short delay
+          setTimeout(() => {
+            this.authService.logout();
+            this.router.navigate(['/login']);
+          }, 2000);
+        } else {
+          this.errorMessage = 'Failed to load your profile. Please try again.';
+        }
+        
         this.isLoading = false;
       }
     });
@@ -147,164 +177,128 @@ export class ProfileComponent implements OnInit {
   }
   
   /**
-   * Load app settings from localStorage
-   * This is just a mock implementation - real app would use a settings service
-   */
-  private loadAppSettings(): void {
-    // Mock implementation - in a real app, get from localStorage or a settings service
-    this.reminderEnabled = localStorage.getItem('reminderEnabled') === 'true';
-    this.darkModeEnabled = localStorage.getItem('darkModeEnabled') === 'true';
-    this.selectedLanguage = localStorage.getItem('language') || 'en';
-  }
-  
-  /**
-   * Toggle edit mode on/off
-   */
-  toggleEditMode(): void {
-    this.editMode = !this.editMode;
-    
-    if (this.editMode) {
-      this.profileForm.enable();
-    } else {
-      this.profileForm.disable();
-      
-      // Reset form to original values if canceling edit
-      if (this.user) {
-        this.populateForm(this.user);
-      }
-    }
-  }
-  
-  /**
-   * Submit form to update profile
+   * Update profile information
    */
   updateProfile(): void {
-    if (this.profileForm.invalid) {
+    if (this.profileForm.invalid || !this.user) {
+      return;
+    }
+    
+    this.isProfileUpdating = true;
+    this.errorMessage = '';
+    this.successMessage = '';
+    
+    const updatedUser: User = {
+      ...this.user,
+      name: this.profileForm.value.name
+    };
+    
+    this.userService.updateUser(updatedUser).subscribe({
+      next: (response) => {
+        this.isProfileUpdating = false;
+        this.editMode = false;
+        this.user = updatedUser;
+        this.successMessage = 'Profile updated successfully';
+        
+        // Clear success message after 3 seconds
+        setTimeout(() => {
+          this.successMessage = '';
+        }, 3000);
+      },
+      error: (error) => {
+        console.error('Error updating profile:', error);
+        this.errorMessage = 'Failed to update profile. Please try again.';
+        this.isProfileUpdating = false;
+      }
+    });
+  }
+  
+  /**
+   * Update password
+   */
+  updatePassword(): void {
+    if (this.passwordForm.invalid || !this.userId) {
+      return;
+    }
+    
+    this.isPasswordUpdating = true;
+    this.errorMessage = '';
+    this.successMessage = '';
+    
+    const newPassword = this.passwordForm.value.newPassword;
+    
+    this.userService.updatePassword(this.userId, newPassword).subscribe({
+      next: (response) => {
+        this.isPasswordUpdating = false;
+        this.changePasswordMode = false;
+        this.passwordForm.reset();
+        
+        this.successMessage = 'Password updated successfully';
+        
+        // Clear success message after 3 seconds
+        setTimeout(() => {
+          this.successMessage = '';
+        }, 3000);
+      },
+      error: (error) => {
+        console.error('Error updating password:', error);
+        this.errorMessage = 'Failed to update password. Please try again.';
+        this.isPasswordUpdating = false;
+      }
+    });
+  }
+  
+  /**
+   * Open delete account confirmation dialog
+   */
+  openDeleteAccountDialog(): void {
+    this.deleteConfirmation = '';
+    
+    const dialogRef = this.dialog.open(this.deleteAccountDialog, {
+      width: '400px'
+    });
+    
+    dialogRef.afterClosed().subscribe(result => {
+      if (result && this.userId) {
+        this.deleteAccount();
+      }
+    });
+  }
+  
+  /**
+   * Delete user account
+   */
+  deleteAccount(): void {
+    if (!this.userId) {
+      this.errorMessage = 'User ID not found';
       return;
     }
     
     this.isLoading = true;
+    this.errorMessage = '';
     
-    // Create user object with updated data
-    const updatedUser: User = {
-      ...this.user!,
-      name: this.profileForm.value.name,
-      email: this.profileForm.value.email
-    };
-    
-    this.userService.updateUser(updatedUser).subscribe({
+    this.userService.deleteUser(this.userId).subscribe({
       next: () => {
         this.isLoading = false;
-        this.editMode = false;
-        this.profileForm.disable();
-        this.user = updatedUser;
-        
-        // Show success message
-        this.snackBar.open('Profile updated successfully', 'Close', {
-          duration: 3000
+        this.authService.logout();
+        this.router.navigate(['/login']);
+        this.snackBar.open('Your account has been deleted', 'Close', {
+          duration: 5000
         });
       },
       error: (error) => {
-        console.error('Error updating profile:', error);
+        console.error('Error deleting account:', error);
+        this.errorMessage = 'Failed to delete account. Please try again.';
         this.isLoading = false;
-        this.errorMessage = 'Could not update your profile. Please try again later.';
       }
     });
   }
   
   /**
-   * Change password
+   * Navigate back to previous page
    */
-  changePassword(): void {
-    if (this.passwordForm.invalid) {
-      return;
-    }
-    
-    this.isPasswordLoading = true;
-    
-    const currentPassword = this.passwordForm.value.currentPassword;
-    const newPassword = this.passwordForm.value.newPassword;
-    
-    // In a real app, you would first verify the current password before changing
-    this.userService.updatePassword(this.userId, newPassword).subscribe({
-      next: () => {
-        this.isPasswordLoading = false;
-        this.passwordForm.reset();
-        
-        // Show success message
-        this.snackBar.open('Password changed successfully', 'Close', {
-          duration: 3000
-        });
-      },
-      error: (error) => {
-        console.error('Error changing password:', error);
-        this.isPasswordLoading = false;
-        this.snackBar.open('Could not change password. Please try again.', 'Close', {
-          duration: 3000
-        });
-      }
-    });
-  }
-  
-  /**
-   * Toggle reminders setting
-   */
-  toggleReminders(event: MatSlideToggleChange): void {
-    this.reminderEnabled = event.checked;
-    // Save to localStorage or settings service
-    localStorage.setItem('reminderEnabled', this.reminderEnabled.toString());
-    
-    this.snackBar.open(
-      `Reminders ${this.reminderEnabled ? 'enabled' : 'disabled'}`, 
-      'Close', 
-      { duration: 2000 }
-    );
-  }
-  
-  /**
-   * Toggle dark mode setting
-   */
-  toggleDarkMode(event: MatSlideToggleChange): void {
-    this.darkModeEnabled = event.checked;
-    // Save to localStorage or settings service
-    localStorage.setItem('darkModeEnabled', this.darkModeEnabled.toString());
-    
-    // In a real app, you would apply the theme change here
-    this.snackBar.open(
-      `Dark mode ${this.darkModeEnabled ? 'enabled' : 'disabled'}`, 
-      'Close', 
-      { duration: 2000 }
-    );
-  }
-  
-  /**
-   * Change language setting
-   */
-  changeLanguage(event: MatSelectChange): void {
-    this.selectedLanguage = event.value;
-    // Save to localStorage or settings service
-    localStorage.setItem('language', this.selectedLanguage);
-    
-    // In a real app, you would apply the language change here
-    this.snackBar.open(
-      `Language changed to ${this.getLanguageName(this.selectedLanguage)}`, 
-      'Close', 
-      { duration: 2000 }
-    );
-  }
-  
-  /**
-   * Get language name from code
-   */
-  private getLanguageName(code: string): string {
-    const languages: {[key: string]: string} = {
-      'en': 'English',
-      'es': 'Spanish',
-      'fr': 'French',
-      'de': 'German'
-    };
-    
-    return languages[code] || code;
+  navigateBack(): void {
+    window.history.back();
   }
   
   /**

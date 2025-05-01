@@ -3,7 +3,7 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { Calendar } from '../models/calendar';
 import { environment } from '../environments/environment';
-import { AuthService } from './auth.services';
+import { AuthService } from './auth.service';
 
 @Injectable({
   providedIn: 'root'
@@ -11,11 +11,14 @@ import { AuthService } from './auth.services';
 export class CalendarService {
   private baseUrl = `${environment.apiUrl}/calendar`;
   
-  constructor(private http: HttpClient, private authService: AuthService) { }
+  constructor(
+    private http: HttpClient, 
+    private authService: AuthService
+  ) { }
   
   getCalendarById(id: number): Observable<Calendar> {
     return this.http.get<Calendar>(`${this.baseUrl}/${id}`, {
-      headers: this.authService.getAuthHeaders()
+        headers: this.authService.getAuthHeaders()
     });
   }
   
