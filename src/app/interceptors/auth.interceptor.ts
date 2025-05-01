@@ -20,7 +20,7 @@ export class AuthInterceptor implements HttpInterceptor {
     }
     
     // Get the auth header from localStorage
-    const authHeader = this.authService.getAuthHeader();
+    const authHeader = localStorage.getItem('getAuthHeaders');
     
     // Clone the request and add the auth header
     if (authHeader) {

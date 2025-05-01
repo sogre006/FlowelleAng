@@ -3,7 +3,6 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { Calendar } from '../models/calendar';
 import { environment } from '../environments/environment';
-import { AuthService } from './auth.service';
 
 @Injectable({
   providedIn: 'root'
@@ -11,38 +10,25 @@ import { AuthService } from './auth.service';
 export class CalendarService {
   private baseUrl = `${environment.apiUrl}/calendar`;
   
-  constructor(
-    private http: HttpClient, 
-    private authService: AuthService
-  ) { }
+  constructor(private http: HttpClient) { }
   
   getCalendarById(id: number): Observable<Calendar> {
-    return this.http.get<Calendar>(`${this.baseUrl}/${id}`, {
-        headers: this.authService.getAuthHeaders()
-    });
+    return this.http.get<Calendar>(`${this.baseUrl}/${id}`);
   }
   
   getCalendarsByUserId(userId: number): Observable<Calendar[]> {
-    return this.http.get<Calendar[]>(`${this.baseUrl}/user/${userId}`, {
-      headers: this.authService.getAuthHeaders()
-    });
+    return this.http.get<Calendar[]>(`${this.baseUrl}/user/${userId}`);
   }
   
   getCalendarByMonthYear(userId: number, month: number, year: number): Observable<Calendar> {
-    return this.http.get<Calendar>(`${this.baseUrl}/user/${userId}/month/${month}/year/${year}`, {
-      headers: this.authService.getAuthHeaders()
-    });
+    return this.http.get<Calendar>(`${this.baseUrl}/user/${userId}/month/${month}/year/${year}`);
   }
   
   createCalendar(calendar: Calendar): Observable<Calendar> {
-    return this.http.post<Calendar>(`${this.baseUrl}`, calendar, {
-      headers: this.authService.getAuthHeaders()
-    });
+    return this.http.post<Calendar>(`${this.baseUrl}`, calendar);
   }
   
   deleteCalendar(id: number, userId: number): Observable<any> {
-    return this.http.delete(`${this.baseUrl}/${id}/user/${userId}`, {
-      headers: this.authService.getAuthHeaders()
-    });
+    return this.http.delete(`${this.baseUrl}/${id}/user/${userId}`);
   }
 }

@@ -3,54 +3,37 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { Cycleentry } from '../models/cycleentry';
 import { environment } from '../environments/environment';
-import { AuthService } from './auth.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class CycleEntryService {
   private baseUrl = `${environment.apiUrl}/cycleentry`;
-  
-  constructor(
-    private http: HttpClient, 
-    private authService: AuthService
-  ) { }
-  
+
+  constructor(private http: HttpClient) { }
+
   getEntryById(id: number): Observable<Cycleentry> {
-    return this.http.get<Cycleentry>(`${this.baseUrl}/${id}`, {
-      headers: this.authService.getAuthHeaders()
-    });
+    return this.http.get<Cycleentry>(`${this.baseUrl}/${id}`);
   }
-  
+
   getEntriesByCycleId(cycleId: number): Observable<Cycleentry[]> {
-    return this.http.get<Cycleentry[]>(`${this.baseUrl}/cycle/${cycleId}`, {
-      headers: this.authService.getAuthHeaders()
-    });
+    return this.http.get<Cycleentry[]>(`${this.baseUrl}/cycle/${cycleId}`);
   }
-  
+
   getEntriesByCalendarId(calendarId: number): Observable<Cycleentry[]> {
-    return this.http.get<Cycleentry[]>(`${this.baseUrl}/calendar/${calendarId}`, {
-      headers: this.authService.getAuthHeaders()
-    });
+    return this.http.get<Cycleentry[]>(`${this.baseUrl}/calendar/${calendarId}`);
   }
-  
+
   getEntriesByDate(date: Date): Observable<Cycleentry[]> {
-    // Format date as YYYY-MM-DD
     const formattedDate = date.toISOString().split('T')[0];
-    return this.http.get<Cycleentry[]>(`${this.baseUrl}/date/${formattedDate}`, {
-      headers: this.authService.getAuthHeaders()
-    });
+    return this.http.get<Cycleentry[]>(`${this.baseUrl}/date/${formattedDate}`);
   }
-  
+
   createEntry(entry: Cycleentry): Observable<Cycleentry> {
-    return this.http.post<Cycleentry>(`${this.baseUrl}`, entry, {
-      headers: this.authService.getAuthHeaders()
-    });
+    return this.http.post<Cycleentry>(`${this.baseUrl}`, entry);
   }
 
   deleteEntry(id: number): Observable<any> {
-    return this.http.delete(`${this.baseUrl}/${id}`, {
-        headers: this.authService.getAuthHeaders()
-    });
+    return this.http.delete(`${this.baseUrl}/${id}`);
   }
 }
