@@ -66,6 +66,10 @@ export class ProfileComponent implements OnInit {
   // Delete account confirmation
   deleteConfirmation: string = '';
   
+  // Max retry count
+  private maxRetries = 3;
+  private retryCount = 0;
+  
   constructor(
     private formBuilder: FormBuilder,
     private userService: UserService,
@@ -113,7 +117,7 @@ export class ProfileComponent implements OnInit {
   }
   
   /**
-   * Load user data using email from localStorage
+   * Load user data using email from localStorage with retry capability
    */
   loadUserData(): void {
     this.isLoading = true;
@@ -126,13 +130,6 @@ export class ProfileComponent implements OnInit {
     if (!email) {
       this.errorMessage = 'User email not found. Please log in again.';
       this.isLoading = false;
-      
-      // Redirect to login
-      setTimeout(() => {
-        this.authService.logout();
-        this.router.navigate(['/login']);
-      }, 2000);
-      
       return;
     }
     
@@ -146,22 +143,29 @@ export class ProfileComponent implements OnInit {
         this.userId = data.user_id;
         this.populateForm(data);
         this.isLoading = false;
+        this.retryCount = 0; // Reset retry count on success
       },
       error: (error: HttpErrorResponse) => {
         console.error('Error loading user data:', error);
         
-        if (error.status === 401) {
-          this.errorMessage = 'Authentication error. Please log in again.';
-          // Redirect to login after a short delay
+        if (error.status === 401 && this.retryCount < this.maxRetries) {
+          // Retry logic for 401 errors
+          this.retryCount++;
+          this.errorMessage = `Authentication error. Retrying (${this.retryCount}/${this.maxRetries})...`;
+          
+          // Wait a moment before retrying
           setTimeout(() => {
-            this.authService.logout();
-            this.router.navigate(['/login']);
-          }, 2000);
+            this.loadUserData();
+          }, 1000);
         } else {
-          this.errorMessage = 'Failed to load your profile. Please try again.';
+          if (error.status === 401) {
+            this.errorMessage = 'Authentication error. Please try refreshing the page or log in again.';
+          } else {
+            this.errorMessage = 'Failed to load your profile. Please try again.';
+          }
+          
+          this.isLoading = false;
         }
-        
-        this.isLoading = false;
       }
     });
   }
@@ -307,5 +311,13 @@ export class ProfileComponent implements OnInit {
   logout(): void {
     this.authService.logout();
     this.router.navigate(['/login']);
+  }
+  
+  /**
+   * Force refresh user data
+   */
+  refreshUserData(): void {
+    this.retryCount = 0;
+    this.loadUserData();
   }
 }

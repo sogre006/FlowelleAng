@@ -84,6 +84,7 @@ export class LoginComponent implements OnInit {
 
     this.authService.login(email, password).subscribe({
       next: (response: any) => {
+        console.log('Login successful, token received:', response.headerValue);
         this.isLoading = false;
         this.router.navigate(['/dashboard']);
       },
